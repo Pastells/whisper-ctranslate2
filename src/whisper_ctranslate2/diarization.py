@@ -21,6 +21,7 @@ class Diarization:
     ):
         self.device = device
         self.use_auth_token = use_auth_token
+        self.model = None
 
     def set_threads(self, threads):
         torch.set_num_threads(threads)
@@ -43,7 +44,8 @@ class Diarization:
         self.model = model_handle.to(device)
 
     def run_model(self, audio: str):
-        self._load_model()
+        if self.model is None:
+            self._load_model()
         audio = decode_audio(audio)
         audio_data = {
             "waveform": torch.from_numpy(audio[None, :]),
