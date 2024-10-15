@@ -114,6 +114,8 @@ def main():
 
     if model == "large-v3-turbo":
         model = "deepdml/faster-whisper-large-v3-turbo-ct2"
+    elif model == "large-v3-3cat":
+        model = "projecte-aina/faster-whisper-large-v3-ca-3catparla"
 
     language = get_language(language, model_directory, model)
     options = get_transcription_options(args)
