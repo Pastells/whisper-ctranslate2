@@ -204,7 +204,7 @@ class WriteVTT(SubtitlesWriter):
             print(f"{start} --> {end}\n{text}\n", file=file, flush=True)
 
 
-class WriteTSV(ResultWriter):
+class WriteTSV(SubtitlesWriter):
     """
     Write a transcript to a file in TSV (tab-separated values) format containing lines like:
     <start time in integer milliseconds>\t<end time in integer milliseconds>\t<transcript text>
@@ -215,13 +215,22 @@ class WriteTSV(ResultWriter):
     """
 
     extension: str = "tsv"
+    always_include_hours: bool = True
+    decimal_marker: str = "."
 
     def write_result(self, result: dict, file: TextIO, options: dict):
-        print("start", "end", "text", sep="\t", file=file)
-        for segment in result["segments"]:
-            print(round(1000 * segment["start"]), file=file, end="\t")
-            print(round(1000 * segment["end"]), file=file, end="\t")
-            print(segment["text"].strip().replace("\t", " "), file=file, flush=True)
+        print("start", "end", "speaker", "text", sep="\t", file=file)
+        for start, end, text in self.iterate_result(result, options):
+            print(start, file=file, end="\t")
+            print(end, file=file, end="\t")
+            try:
+                speaker, text = text.strip().replace("\t", " ").split(": ")
+            except ValueError:
+                print(f"ERROR: no SPEAKER In: {text}")
+                text = text.strip().replace("\t", " ")
+                speaker = "[SPEAKER_99]"
+            print(speaker, file=file, end="\t")
+            print(text, file=file, flush=True)
 
 
 class WriteJSON(ResultWriter):
