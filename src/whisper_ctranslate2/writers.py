@@ -219,17 +219,25 @@ class WriteTSV(SubtitlesWriter):
     decimal_marker: str = "."
 
     def write_result(self, result: dict, file: TextIO, options: dict):
-        print("start", "end", "speaker", "text", sep="\t", file=file)
+        if len(options["hf_token"]) > 0:
+            print("start", "end", "speaker", "text", sep="\t", file=file)
+        else:
+            print("start", "end", "text", sep="\t", file=file)
+
         for start, end, text in self.iterate_result(result, options):
             print(start, file=file, end="\t")
             print(end, file=file, end="\t")
-            try:
-                speaker, text = text.strip().replace("\t", " ").split(": ")
-            except ValueError:
-                print(f"ERROR: no SPEAKER In: {text}")
+            if len(options["hf_token"]) > 0:
+                try:
+                    speaker, text = text.strip().replace("\t", " ").split(": ")
+                except ValueError:
+                    print(f"ERROR: no SPEAKER In: {text}")
+                    text = text.strip().replace("\t", " ")
+                    speaker = "[SPEAKER_99]"
+                print(speaker, file=file, end="\t")
+            else:
                 text = text.strip().replace("\t", " ")
-                speaker = "[SPEAKER_99]"
-            print(speaker, file=file, end="\t")
+
             print(text, file=file, flush=True)
 
 

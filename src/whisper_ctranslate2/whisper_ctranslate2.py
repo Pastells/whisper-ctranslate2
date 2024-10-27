@@ -111,7 +111,7 @@ def main():
     local_files_only: bool = args.pop("local_files_only")
     live_volume_threshold: float = args.pop("live_volume_threshold")
     live_input_device: int = args.pop("live_input_device")
-    hf_token = args.pop("hf_token")
+    hf_token = args.get("hf_token")
     speaker_name = args.pop("speaker_name")
 
     if model == "large-v3-turbo":
@@ -134,6 +134,7 @@ def main():
         "max_line_count",
         "max_line_width",
         "max_words_per_line",
+        "hf_token",
     ]
     if not options.word_timestamps:
         for option in word_options:
