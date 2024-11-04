@@ -8,9 +8,7 @@ import re
 from typing import Callable, TextIO, Optional
 
 
-def format_timestamp(
-    seconds: float, always_include_hours: bool = False, decimal_marker: str = "."
-):
+def format_timestamp(seconds: float, always_include_hours: bool = False, decimal_marker: str = "."):
     assert seconds >= 0, "non-negative timestamp expected"
     milliseconds = round(seconds * 1000.0)
 
@@ -24,9 +22,7 @@ def format_timestamp(
     milliseconds -= seconds * 1_000
 
     hours_marker = f"{hours:02d}:" if always_include_hours or hours > 0 else ""
-    return (
-        f"{hours_marker}{minutes:02d}:{seconds:02d}{decimal_marker}{milliseconds:03d}"
-    )
+    return f"{hours_marker}{minutes:02d}:{seconds:02d}{decimal_marker}{milliseconds:03d}"
 
 
 class ResultWriter:
@@ -38,9 +34,7 @@ class ResultWriter:
     def __call__(self, result: dict, audio_path: str, options: dict):
         audio_basename = os.path.basename(audio_path)
         audio_basename = os.path.splitext(audio_basename)[0]
-        output_path = os.path.join(
-            self.output_dir, audio_basename + "." + self.extension
-        )
+        output_path = os.path.join(self.output_dir, audio_basename + "." + self.extension)
 
         with open(output_path, "w", encoding="utf-8") as f:
             self.write_result(result, f, options)
@@ -59,13 +53,9 @@ class SubtitlesWriter(ResultWriter):
         max_line_count: Optional[int] = options.get("max_line_count", None)
         highlight_words = options.get("highlight_words", False)
         max_line_width = 1000 if raw_max_line_width is None else raw_max_line_width
-        max_words_per_line = (
-            1000 if raw_max_words_per_line is None else raw_max_words_per_line
-        )
+        max_words_per_line = 1000 if raw_max_words_per_line is None else raw_max_words_per_line
         preserve_segments = (
-            max_line_count is None
-            or raw_max_line_width is None
-            or raw_max_words_per_line is None
+            max_line_count is None or raw_max_line_width is None or raw_max_words_per_line is None
         )
 
         def iterate_subtitles():
@@ -86,17 +76,10 @@ class SubtitlesWriter(ResultWriter):
                         segment["words"][chunk_index : chunk_index + words_count]
                     ):
                         timing = original_timing.copy()
-                        long_pause = (
-                            not preserve_segments and timing["start"] - last > 3.0
-                        )
+                        long_pause = not preserve_segments and timing["start"] - last > 3.0
                         has_room = line_len + len(timing["word"]) <= max_line_width
                         seg_break = i == 0 and len(subtitle) > 0 and preserve_segments
-                        if (
-                            line_len > 0
-                            and has_room
-                            and not long_pause
-                            and not seg_break
-                        ):
+                        if line_len > 0 and has_room and not long_pause and not seg_break:
                             # line continuation
                             line_len += len(timing["word"])
                         else:
@@ -143,15 +126,19 @@ class SubtitlesWriter(ResultWriter):
                         if last != start:
                             yield last, start, subtitle_text
 
-                        yield start, end, "".join(
-                            [
-                                (
-                                    re.sub(r"^(\s*)(.*)$", r"\1<u>\2</u>", word)
-                                    if j == i
-                                    else word
-                                )
-                                for j, word in enumerate(all_words)
-                            ]
+                        yield (
+                            start,
+                            end,
+                            "".join(
+                                [
+                                    (
+                                        re.sub(r"^(\s*)(.*)$", r"\1<u>\2</u>", word)
+                                        if j == i
+                                        else word
+                                    )
+                                    for j, word in enumerate(all_words)
+                                ]
+                            ),
                         )
                         last = end
                 else:
@@ -187,9 +174,7 @@ class WriteSRT(SubtitlesWriter):
     decimal_marker: str = ","
 
     def write_result(self, result: dict, file: TextIO, options: dict):
-        for i, (start, end, text) in enumerate(
-            self.iterate_result(result, options), start=1
-        ):
+        for i, (start, end, text) in enumerate(self.iterate_result(result, options), start=1):
             print(f"{i}\n{start} --> {end}\n{text}\n", file=file, flush=True)
 
 
@@ -253,9 +238,7 @@ class WriteJSON(ResultWriter):
             json.dump(result, file)
 
 
-def get_writer(
-    output_format: str, output_dir: str
-) -> Callable[[dict, TextIO, dict], None]:
+def get_writer(output_format: str, output_dir: str) -> Callable[[dict, TextIO, dict], None]:
     writers = {
         "txt": WriteTXT,
         "vtt": WriteVTT,

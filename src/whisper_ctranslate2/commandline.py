@@ -42,12 +42,8 @@ class CommandLine:
 
     @staticmethod
     def read_command_line():
-        parser = argparse.ArgumentParser(
-            formatter_class=argparse.ArgumentDefaultsHelpFormatter
-        )
-        parser.add_argument(
-            "audio", nargs="*", type=str, help="audio file(s) to transcribe"
-        )
+        parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+        parser.add_argument("audio", nargs="*", type=str, help="audio file(s) to transcribe")
 
         model_args = parser.add_argument_group("Model selection options")
 
@@ -206,8 +202,7 @@ class CommandLine:
             "--language",
             type=str,
             default=None,
-            choices=sorted(LANGUAGES.keys())
-            + sorted([k.title() for k in TO_LANGUAGE_CODE.keys()]),
+            choices=sorted(LANGUAGES.keys()) + sorted([k.title() for k in TO_LANGUAGE_CODE.keys()]),
             help="language spoken in the audio, specify None to perform language detection",
         )
 

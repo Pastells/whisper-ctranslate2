@@ -33,9 +33,7 @@ class Diarization:
     def _load_model(self):
         model_name = "pyannote/speaker-diarization-3.1"
         device = torch.device(self.device)
-        model_handle = Pipeline.from_pretrained(
-            model_name, use_auth_token=self.use_auth_token
-        )
+        model_handle = Pipeline.from_pretrained(model_name, use_auth_token=self.use_auth_token)
         if model_handle is None:
             raise ValueError(
                 f"The token Hugging Face token '{self.use_auth_token}' for diarization is not valid or you did not accept the EULA"
@@ -56,13 +54,9 @@ class Diarization:
 
     def assign_speakers_to_segments(self, segments, transcript_result, speaker_name):
         diarize_data = list(segments.itertracks(yield_label=True))
-        return self._do_assign_speakers_to_segments(
-            diarize_data, transcript_result, speaker_name
-        )
+        return self._do_assign_speakers_to_segments(diarize_data, transcript_result, speaker_name)
 
-    def _do_assign_speakers_to_segments(
-        self, diarize_data, transcript_result, speaker_name
-    ):
+    def _do_assign_speakers_to_segments(self, diarize_data, transcript_result, speaker_name):
         diarize_df = np.array(
             diarize_data,
             dtype=[("segment", object), ("label", object), ("speaker", object)],
