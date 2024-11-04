@@ -1,11 +1,12 @@
-from .writers import format_timestamp
-from typing import NamedTuple, Optional, List, Union
-import tqdm
 import sys
-from faster_whisper import WhisperModel
-from .languages import LANGUAGES
-from typing import BinaryIO
+from typing import BinaryIO, List, NamedTuple, Optional, Union
+
 import numpy as np
+import tqdm
+from faster_whisper import WhisperModel
+
+from .languages import LANGUAGES
+from .writers import format_timestamp
 
 system_encoding = sys.getdefaultencoding()
 
@@ -49,6 +50,7 @@ class TranscriptionOptions(NamedTuple):
     vad_min_speech_duration_ms: Optional[int]
     vad_max_speech_duration_s: Optional[int]
     vad_min_silence_duration_ms: Optional[int]
+    prob_suffix: bool
 
 
 class Transcribe:
@@ -77,6 +79,19 @@ class Transcribe:
 
         return text_words
 
+    def _get_suffixed_text(self, words):
+        prob_thres = (0.2, 0.7)
+        prob_suffix = (" ##", " #")
+        thres_suffix = zip(prob_thres, prob_suffix)
+
+        def add_suffix(word, probability, thres_suffix=thres_suffix):
+            for thres, suffix in thres_suffix:
+                if probability < thres:
+                    return suffix + word.strip()
+            return word
+
+        return "".join(add_suffix(w.word, w.probability) for w in words)
+
     def _get_vad_parameters_dictionary(self, options):
         vad_parameters = {}
 
@@ -84,17 +99,13 @@ class Transcribe:
             vad_parameters["threshold"] = options.vad_threshold
 
         if options.vad_min_speech_duration_ms:
-            vad_parameters["min_speech_duration_ms"] = (
-                options.vad_min_speech_duration_ms
-            )
+            vad_parameters["min_speech_duration_ms"] = options.vad_min_speech_duration_ms
 
         if options.vad_max_speech_duration_s:
             vad_parameters["max_speech_duration_s"] = options.vad_max_speech_duration_s
 
         if options.vad_min_silence_duration_ms:
-            vad_parameters["min_silence_duration_ms"] = (
-                options.vad_min_silence_duration_ms
-            )
+            vad_parameters["min_silence_duration_ms"] = options.vad_min_silence_duration_ms
 
         return vad_parameters
 
@@ -176,9 +187,11 @@ class Transcribe:
                 start, end, text = segment.start, segment.end, segment.text
                 all_text += segment.text
 
-                if verbose or options.print_colors:
+                if verbose or options.print_colors or options.prob_suffix:
                     if options.print_colors and segment.words:
                         text = self._get_colored_text(segment.words)
+                    if options.prob_suffix and segment.words:
+                        text = self._get_suffixed_text(segment.words)
                     else:
                         text = segment.text
 

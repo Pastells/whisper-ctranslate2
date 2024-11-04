@@ -311,6 +311,12 @@ class CommandLine:
             default=False,
             help="(experimental) extract word-level timestamps and refine the results based on them",
         )
+        algorithm_args.add_argument(
+            "--prob_suffix",
+            type=CommandLine()._str2bool,
+            default=False,
+            help="if word_timestamps is True, add suffixes to low_probability words",
+        )
 
         algorithm_args.add_argument(
             "--prepend_punctuations",

@@ -1,15 +1,17 @@
-import os
-from .transcribe import Transcribe, TranscriptionOptions
-from .languages import from_language_to_iso_code
-import numpy as np
-import warnings
-from typing import Union, List
-from .writers import get_writer
-from .live import Live
-import sys
 import datetime
-from .commandline import CommandLine
+import os
+import sys
 import traceback
+import warnings
+from typing import List, Union
+
+import numpy as np
+
+from .commandline import CommandLine
+from .languages import from_language_to_iso_code
+from .live import Live
+from .transcribe import Transcribe, TranscriptionOptions
+from .writers import get_writer
 
 
 def get_diarization(audio, diarize_model, verbose):
@@ -71,17 +73,14 @@ def get_transcription_options(args):
         vad_min_speech_duration_ms=args.pop("vad_min_speech_duration_ms"),
         vad_max_speech_duration_s=args.pop("vad_max_speech_duration_s"),
         vad_min_silence_duration_ms=args.pop("vad_min_silence_duration_ms"),
+        prob_suffix=args.pop("prob_suffix"),
     )
 
 
 def get_language(language, model_directory, model):
     language = from_language_to_iso_code(language)
 
-    if (
-        not model_directory
-        and model.endswith(".en")
-        and language not in {"en", "English"}
-    ):
+    if not model_directory and model.endswith(".en") and language not in {"en", "English"}:
         if language is not None:
             warnings.warn(
                 f"{model} is an English-only model but receipted '{language}'; using English instead."
@@ -124,9 +123,7 @@ def main():
 
     if not live_transcribe and len(audio) == 0:
         sys.stderr.write("You need to specify one or more audio files\n")
-        sys.stderr.write(
-            "Use `whisper-ctranslate2 --help` to see the available options.\n"
-        )
+        sys.stderr.write("Use `whisper-ctranslate2 --help` to see the available options.\n")
         return
 
     word_options = [
@@ -143,9 +140,7 @@ def main():
                 return
 
     if options.hallucination_silence_threshold and not options.word_timestamps:
-        sys.stderr.write(
-            "--hallucination_silence_threshold requires --word_timestamps True"
-        )
+        sys.stderr.write("--hallucination_silence_threshold requires --word_timestamps True")
         return
 
     if args["max_line_count"] and not args["max_line_width"]:
@@ -253,9 +248,7 @@ def main():
 
             if diarization:
                 if verbose:
-                    print(
-                        f"Time used for transcription: {datetime.datetime.now() - start_time}"
-                    )
+                    print(f"Time used for transcription: {datetime.datetime.now() - start_time}")
                 result = diarize_model.assign_speakers_to_segments(
                     diarization_output[audio_path], result, speaker_name
                 )
