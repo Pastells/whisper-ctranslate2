@@ -1,4 +1,5 @@
 import argparse
+
 from .languages import LANGUAGES, TO_LANGUAGE_CODE
 from .version import __version__
 
@@ -16,6 +17,8 @@ MODEL_NAMES = [
     "large-v3",
     "large-v3-3cat",
     "large-v3-turbo",
+    # from faster-whisper -> mobiuslabsgmbh/faster-whisper-large-v3-turbo
+    "turbo",
     "distil-large-v2",
     "distil-large-v3",
     "distil-medium.en",
@@ -348,6 +351,12 @@ class CommandLine:
             type=str,
             default=None,
             help="Hotwords/hint phrases to the model. Useful for names you want the model to priotize",
+        )
+        algorithm_args.add_argument(
+            "--batched",
+            type=CommandLine()._str2bool,
+            default="False",
+            help="Uses Batched transcription which can provide an additional 2x-3x speed increase",
         )
 
         vad_args = parser.add_argument_group("VAD filter arguments")
