@@ -1,9 +1,11 @@
 import sys
+
 from typing import BinaryIO, List, NamedTuple, Optional, Union
 
 import numpy as np
 import tqdm
-from faster_whisper import WhisperModel
+
+from faster_whisper import BatchedInferencePipeline, WhisperModel
 
 from .languages import LANGUAGES
 from .writers import format_timestamp
@@ -51,6 +53,7 @@ class TranscriptionOptions(NamedTuple):
     vad_max_speech_duration_s: Optional[int]
     vad_min_silence_duration_ms: Optional[int]
     prob_suffix: bool
+    multilingual: bool
 
 
 class Transcribe:
@@ -118,6 +121,8 @@ class Transcribe:
         threads: int,
         cache_directory: str,
         local_files_only: bool,
+        batched: bool,
+        batch_size: int = None,
     ):
         self.model = WhisperModel(
             model_path,
@@ -128,6 +133,12 @@ class Transcribe:
             download_root=cache_directory,
             local_files_only=local_files_only,
         )
+
+        self.batch_size = batch_size
+        if batched:
+            self.batched_model = BatchedInferencePipeline(model=self.model)
+        else:
+            self.batched_model = None
 
     def inference(
         self,
@@ -140,7 +151,16 @@ class Transcribe:
     ):
         vad_parameters = self._get_vad_parameters_dictionary(options)
 
-        segments, info = self.model.transcribe(
+        if self.batched_model:
+            model = self.batched_model
+            vad = True
+        else:
+            model = self.model
+            vad = options.vad_filter
+
+        batch_size = {"batch_size": self.batch_size} if self.batch_size is not None else {}
+
+        segments, info = model.transcribe(
             audio=audio,
             language=language,
             task=task,
@@ -165,8 +185,10 @@ class Transcribe:
             prepend_punctuations=options.prepend_punctuations,
             append_punctuations=options.append_punctuations,
             hallucination_silence_threshold=options.hallucination_silence_threshold,
-            vad_filter=options.vad_filter,
+            vad_filter=vad,
             vad_parameters=vad_parameters,
+            **batch_size,
+            multilingual=options.multilingual,
         )
 
         language_name = LANGUAGES[info.language].title()

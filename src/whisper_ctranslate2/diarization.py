@@ -1,6 +1,8 @@
-import numpy as np
-from faster_whisper.audio import decode_audio
 from collections import OrderedDict
+
+import numpy as np
+
+from faster_whisper.audio import decode_audio
 
 try:
     import torch
@@ -18,10 +20,12 @@ class Diarization:
         self,
         use_auth_token=None,
         device: str = "cpu",
+        num_speakers=2,
     ):
         self.device = device
         self.use_auth_token = use_auth_token
         self.model = None
+        self.num_speakers = num_speakers
 
     def set_threads(self, threads):
         torch.set_num_threads(threads)
@@ -49,7 +53,7 @@ class Diarization:
             "waveform": torch.from_numpy(audio[None, :]),
             "sample_rate": 16000,
         }
-        segments = self.model(audio_data)
+        segments = self.model(audio_data, num_speakers=self.num_speakers)
         return segments
 
     def assign_speakers_to_segments(self, segments, transcript_result, speaker_name):

@@ -3,6 +3,7 @@ import os
 import sys
 import traceback
 import warnings
+
 from typing import List, Union
 
 import numpy as np
@@ -74,6 +75,7 @@ def get_transcription_options(args):
         vad_max_speech_duration_s=args.pop("vad_max_speech_duration_s"),
         vad_min_silence_duration_ms=args.pop("vad_min_silence_duration_ms"),
         prob_suffix=args.pop("prob_suffix"),
+        multilingual=args.pop("multilingual"),
     )
 
 
@@ -110,10 +112,8 @@ def main():
     local_files_only: bool = args.pop("local_files_only")
     live_volume_threshold: float = args.pop("live_volume_threshold")
     live_input_device: int = args.pop("live_input_device")
-    hf_token = args.get("hf_token")
-    speaker_name = args.pop("speaker_name")
 
-    if model == "large-v3-turbo":
+    if model in ("large-v3-turbo", "turbo"):
         model = "deepdml/faster-whisper-large-v3-turbo-ct2"
     elif model == "large-v3-3cat":
         model = "projecte-aina/faster-whisper-large-v3-ca-3catparla"
@@ -141,6 +141,10 @@ def main():
 
     if options.hallucination_silence_threshold and not options.word_timestamps:
         sys.stderr.write("--hallucination_silence_threshold requires --word_timestamps True")
+        return
+
+    if batch_size and not batched:
+        sys.stderr.write("--batched_size can only be used if-- batched is True")
         return
 
     if args["max_line_count"] and not args["max_line_width"]:
@@ -199,6 +203,7 @@ def main():
             verbose,
             live_volume_threshold,
             live_input_device,
+            live_input_device_sample_rate,
             options,
         ).inference()
 
@@ -212,6 +217,8 @@ def main():
         threads,
         cache_directory,
         local_files_only,
+        batched,
+        batch_size,
     )
 
     diarization = len(hf_token) > 0
@@ -221,7 +228,9 @@ def main():
         from .diarization import Diarization
 
         diarization_device = "cpu" if device == "auto" else device
-        diarize_model = Diarization(use_auth_token=hf_token, device=diarization_device)
+        diarize_model = Diarization(
+            use_auth_token=hf_token, device=diarization_device, num_speakers=speaker_num
+        )
         if threads > 0:
             diarize_model.set_threads(threads)
 

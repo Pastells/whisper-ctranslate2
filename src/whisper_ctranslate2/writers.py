@@ -2,10 +2,11 @@
 # Based on code from https://github.com/openai/whisper
 #
 
-import os
 import json
+import os
 import re
-from typing import Callable, TextIO, Optional
+
+from typing import Callable, Optional, TextIO
 
 
 def format_timestamp(seconds: float, always_include_hours: bool = False, decimal_marker: str = "."):
