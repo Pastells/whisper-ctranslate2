@@ -351,12 +351,6 @@ class CommandLine:
             default=None,
             help="Hotwords/hint phrases to the model. Useful for names you want the model to priotize",
         )
-        algorithm_args.add_argument(
-            "--batched",
-            type=CommandLine()._str2bool,
-            default="False",
-            help="Uses Batched transcription which can provide an additional 2x-3x speed increase",
-        )
 
         algorithm_args.add_argument(
             "--batched",
